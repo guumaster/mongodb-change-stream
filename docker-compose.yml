@@ -1,0 +1,29 @@
+version: "3"
+services:
+  mongo0:
+    hostname: mongo0
+    container_name: mongo0
+    image: mongo
+    ports:
+      - 30100:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+  mongo1:
+    hostname: mongo1
+    container_name: mongo1
+    image: mongo
+    ports:
+      - 30101:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+
+  watcher:
+    build: watcher
+    environment:
+      - MONGO_URI=mongodb://mongo0:27017,mongo1:27017/?replicaSet=rs0&connect=direct
+
+  generator:
+    build: generator
+    environment:
+      - MONGO_URI=mongodb://mongo0:27017,mongo1:27017/?replicaSet=rs0&connect=direct
+
