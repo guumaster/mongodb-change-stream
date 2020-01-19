@@ -28,7 +28,8 @@
 
       ws.onmessage = function (msg) {
         var line =  msg.data + "\n";
-        chat.innerText += line;
+        //chat.innerText += line;
+        chat.prepend(line)
       };
 
     </script>
