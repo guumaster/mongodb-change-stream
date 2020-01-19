@@ -8,6 +8,7 @@ It consists of a mongo database with two nodes in replicaset, a watcher containe
 ## Requirements
 
 - Docker and Docker compose installed
+- A copy of [Nats Streaming UI](https://gitlab.com/united-travel-tickets/common/nats-streaming-ui)
 
 ## Usage
 
@@ -28,19 +29,30 @@ config={"_id":"rs0","members":[{"_id":0,"host":"mongo0:27017"},{"_id":1,"host":"
 rs.initiate()
 ```
 
+### Clone nats-streaming-ui
+
+```
+git clone --depth=1 git@gitlab.com:united-travel-tickets/common/nats-streaming-ui.git 
+```
+
 ### Start the watcher
 
 Start the ChangeStream watcher container:
 
-`docker-compose up watcher`
+`docker-compose up mongo-watcher-socket`
 
 ### Start the generators
 
 You can start multiple generators with the scale command:
 
-`docker scale generator=10`
+`docker scale nats-generator=10`
 
 Set scale to 0 if you want to stop inserting messages into the logs collection
+
+### Open logs UI
+
+[http://localhost:5000](http://localhost:5000)
+
 
 
 ## References

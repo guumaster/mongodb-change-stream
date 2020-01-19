@@ -1,5 +1,6 @@
 version: "3"
 services:
+
   mongo0:
     hostname: mongo0
     container_name: mongo0
@@ -8,6 +9,7 @@ services:
       - 30100:27017
     restart: always
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+
   mongo1:
     hostname: mongo1
     container_name: mongo1
@@ -17,13 +19,56 @@ services:
     restart: always
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
 
-  watcher:
-    build: watcher
+  nats-ui:
+    build: nats-streaming-ui
+    depends_on:
+      - nats-streaming
     environment:
+      - STAN_URL=nats://nats-streaming:4222
+      - STAN_MONITOR_URL=nats://nats-streaming:8222
+    ports:
+      - "8282:8282"
+
+  nats-streaming:
+    image: nats-streaming:latest
+    restart: unless-stopped
+    ports:
+      - "4222:4222"
+
+  nats-generator:
+    build: nats-generator
+    depends_on:
+      - nats-streaming
+    environment:
+      - STAN_URL=nats://nats-streaming:4222
+
+  nats-to-mongo:
+    build: nats-to-mongo
+    depends_on:
+      - mongo0
+      - mongo1
+      - nats-streaming
+    environment:
+      - STAN_URL=nats://nats-streaming:4222
       - MONGO_URI=mongodb://mongo0:27017,mongo1:27017/?replicaSet=rs0&connect=direct
 
-  generator:
-    build: generator
+#  mongo-generator:
+#    build: mongo-generator
+#    environment:
+#      - MONGO_URI=mongodb://mongo0:27017,mongo1:27017/?replicaSet=rs0&connect=direct
+
+#  mongo-watcher:
+#    build: mongo-watcher
+#    environment:
+#      - MONGO_URI=mongodb://mongo0:27017,mongo1:27017/?replicaSet=rs0&connect=direct
+
+  mongo-watcher-socket:
+    build: socket-server
+    depends_on:
+      - nats-streaming
+      - nats-to-mongo
     environment:
       - MONGO_URI=mongodb://mongo0:27017,mongo1:27017/?replicaSet=rs0&connect=direct
+    ports:
+      - "5000:5000"
 

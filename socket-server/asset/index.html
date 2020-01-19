@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <title>Logs</title>
+  </head>
+
+  <style>
+    #chat {
+      text-align: left;
+      background: #f1f1f1;
+      width: 900px;
+      min-height: 500px;
+      padding: 20px;
+    }
+  </style>
+
+  <body>
+    <center>
+      <h3>Logs</h3>
+      <pre id="chat"></pre>
+    </center>
+
+    <script>
+      var url = "ws://" + window.location.host + "/ws";
+      var ws = new WebSocket(url);
+
+      var chat = document.getElementById("chat");
+
+      ws.onmessage = function (msg) {
+        var line =  msg.data + "\n";
+        chat.innerText += line;
+      };
+
+    </script>
+  </body>
+</html>
