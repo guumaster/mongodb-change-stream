@@ -28,7 +28,7 @@ func main() {
 	publisher, err := nats.NewStreamingPublisher(
 		nats.StreamingPublisherConfig{
 			ClusterID: "test-cluster",
-			ClientID:  "example-publisher",
+			ClientID:  fmt.Sprintf("publisher-%d", time.Now().UnixNano()),
 			StanOptions: []stan.Option{
 				stan.NatsURL(natsURL),
 			},
@@ -44,7 +44,7 @@ func main() {
   total := 0
   for {
     data := map[string]interface{}{
-      "msg": gofakeit.HackerPhrase(),
+      "msg": fmt.Sprintf("[%s] %s", os.Getenv("HOSTNAME"), gofakeit.HackerPhrase()),
       "logLevel": gofakeit.LogLevel("general"),
     }
     str, err := json.Marshal(data)
@@ -61,7 +61,7 @@ func main() {
     total++
     fmt.Printf("total %5d\n", total)
     // random wait before next batch
-    timer := rand.Intn(30) + 5
+    timer := rand.Intn(500) + 300
     time.Sleep(time.Duration(timer) * time.Millisecond)
   }
 }
