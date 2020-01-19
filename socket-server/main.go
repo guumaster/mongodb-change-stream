@@ -19,6 +19,8 @@ func main() {
 	r := gin.Default()
 	m := melody.New()
 
+  DEBUG_MSGS := os.Getenv("DEBUG_MSGS") == "1"
+
 	r.GET("/", func(c *gin.Context) {
 		http.ServeFile(c.Writer, c.Request, "asset/index.html")
 	})
@@ -66,8 +68,10 @@ func main() {
     lvl := formatLevel(doc["logLevel"].(string))
 
     msg := fmt.Sprintf("%7s: %s", lvl, doc["msg"])
-    //log.Printf("%s", lvl, doc["msg"])
-    log.Println(msg)
+
+    if DEBUG_MSGS {
+      log.Println(msg)
+    }
 		m.Broadcast([]byte(msg))
 
     // Uncomment this if you want to see all metadata

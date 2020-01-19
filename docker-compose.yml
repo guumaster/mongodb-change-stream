@@ -68,6 +68,8 @@ services:
       - nats-streaming
       - nats-to-mongo
     environment:
+      # Set DEBUG=1 if you want to see msgs with docker-compose logs
+      - DEBUG_MSGS=0 
       - MONGO_URI=mongodb://mongo0:27017,mongo1:27017/?replicaSet=rs0&connect=direct
     ports:
       - "5000:5000"
