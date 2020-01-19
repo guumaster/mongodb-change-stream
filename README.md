@@ -43,3 +43,10 @@ You can start multiple generators with the scale command:
 Set scale to 0 if you want to stop inserting messages into the logs collection
 
 
+## References
+
+* [How to simply set up Mongo's replica set locally with Docker](https://37yonub.ru/articles/mongo-replica-set-docker-localhost)
+* [go - Watch for MongoDB Change Streams - Stack Overflow](https://stackoverflow.com/questions/49151104/watch-for-mongodb-change-streams)
+* [Using the official MongoDB Go driver](https://vkt.sh/go-mongodb-driver-cookbook/)
+
+

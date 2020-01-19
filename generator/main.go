@@ -15,24 +15,12 @@ import (
 )
 
 func main() {
-  mongoURI := os.Getenv("MONGO_URI")
-  if mongoURI == "" {
-    mongoURI = "mongodb://localhost:30100,localhost:30101/?replicaSet=rs0&connect=direct"
-  }
-  fmt.Printf("Connecting... %s\n", mongoURI)
-  ctx := context.TODO()
-  clientOptions := options.Client().ApplyURI(mongoURI)
-  client, err := mongo.Connect(ctx, clientOptions)
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Println("Ping...")
-  err = client.Ping(ctx, nil)
-  if err != nil {
-    log.Fatal(err)
-  }
+  maxBulkMsgs := 20
 
-  fmt.Println("Connected!")
+  client, err := connectDB()
+  if err != nil {
+    log.Fatal(err)
+  }
 
   collection := client.Database("demo").Collection("logs")
 
@@ -40,20 +28,16 @@ func main() {
 
   total := 0
   for {
-    level := gofakeit.LogLevel("general")
-    msg := gofakeit.HackerPhrase()
-    
 
     // create the slice of write models
     var writes []mongo.WriteModel
     
-    totalWrites := rand.Intn(10)+1
+    totalWrites := rand.Intn(maxBulkMsgs)+1
 
-    // range over each list of operations and create the write model
     for i := 0; i<totalWrites; i++ {
       model := mongo.NewInsertOneModel().SetDocument(bson.M{
-        "msg": msg,
-        "logLevel": level,
+        "msg": gofakeit.HackerPhrase(),
+        "logLevel": gofakeit.LogLevel("general"),
       })
       writes = append(writes, model)
     }
@@ -66,20 +50,36 @@ func main() {
     if err != nil {
       log.Fatal(err)
     }
-    /*
-    _, err := collection.InsertOne(ctx, bson.M{"msg": msg, "logLevel": level })
-    if err != nil {
-      log.Fatal(err)
-    }
-    */
 
     total = total + totalWrites
-    fmt.Printf("Inserted %5d\n", total)
+    fmt.Printf("Inserted %3d Total: %6d\n", totalWrites, total)
 
-    timer := rand.Intn(30) + 10
+    // random wait before next batch
+    timer := rand.Intn(30) + 5
     time.Sleep(time.Duration(timer) * time.Millisecond)
   }
+}
 
+func connectDB() (*mongo.Client, error) {
+  mongoURI := os.Getenv("MONGO_URI")
+  if mongoURI == "" {
+    mongoURI = "mongodb://localhost:30100,localhost:30101/?replicaSet=rs0&connect=direct"
+  }
+  fmt.Printf("Connecting... %s\n", mongoURI)
+  ctx := context.TODO()
+  clientOptions := options.Client().ApplyURI(mongoURI)
+  client, err := mongo.Connect(ctx, clientOptions)
+  if err != nil {
+    return nil, err
+  }
+  fmt.Println("Ping...")
+  err = client.Ping(ctx, nil)
+  if err != nil {
+    return nil, err
+  }
 
+  fmt.Println("Connected!")
+
+  return client, nil
 }
 

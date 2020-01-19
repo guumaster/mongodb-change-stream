@@ -12,24 +12,12 @@ import (
 )
 
 func main() {
-  mongoURI := os.Getenv("MONGO_URI")
-  if mongoURI == "" {
-    mongoURI = "mongodb://localhost:30100,localhost:30101/?replicaSet=rs0&connect=direct"
-  }
-  fmt.Printf("Connecting... %s\n", mongoURI)
-  ctx := context.TODO()
-  clientOptions := options.Client().ApplyURI(mongoURI)
-  client, err := mongo.Connect(ctx, clientOptions)
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Println("Ping...")
-  err = client.Ping(ctx, nil)
+  client, err := connectDB()
   if err != nil {
     log.Fatal(err)
   }
 
-  fmt.Println("Connected!")
+  ctx := context.TODO()
 
   collection := client.Database("demo").Collection("logs")
 
@@ -49,13 +37,64 @@ func main() {
       log.Printf("error decoding: %s", e)
     }
 
+    // Only show insert actions
+    if changeDoc["operationType"] != "insert" {
+      continue
+    }
+
+    doc := changeDoc["fullDocument"].(map[string]interface{})
+
+    lvl := formatLevel(doc["logLevel"].(string))
+
+    log.Printf("%7s: %s", lvl, doc["msg"])
+
     // Uncomment this if you want to see all metadata
     //log.Printf("change: %+v", changeDoc)
 
-    printJSON(changeDoc["fullDocument"])
+    // Uncomment this to show document as JSON
+    //printJSON(changeDoc["fullDocument"])
+  }
+}
+
+var LEVELS = map[string]string{
+  "error": "ERR",
+  "warning": "WARN",
+  "fatal": "FATAL",
+  "debug": "DEBUG",
+  "trace": "TRACE",
+  "info": "INFO",
+}
+
+func formatLevel(key string) string {
+  if lvl, ok := LEVELS[key]; ok {
+    return fmt.Sprintf("[%s]", lvl)
+  }
+  return ""
+}
+
+func connectDB() (*mongo.Client, error) {
+  mongoURI := os.Getenv("MONGO_URI")
+  if mongoURI == "" {
+    mongoURI = "mongodb://localhost:30100,localhost:30101/?replicaSet=rs0&connect=direct"
+  }
+  fmt.Printf("Connecting... %s\n", mongoURI)
+  ctx := context.TODO()
+  clientOptions := options.Client().ApplyURI(mongoURI)
+  client, err := mongo.Connect(ctx, clientOptions)
+  if err != nil {
+    return nil, err
+  }
+  fmt.Println("Ping...")
+  err = client.Ping(ctx, nil)
+  if err != nil {
+    return nil, err
   }
 
+  fmt.Println("Connected!")
+
+  return client, nil
 }
+
 
 // printJSON prints v as JSON encoded with indent to stdout. It panics on any error.
 func printJSON(v interface{}) {
